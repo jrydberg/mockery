@@ -10,12 +10,32 @@ import inspect
 import sys
 
 
+class MethodInvocation(object):
+    def __init__(self, mock):
+        self.__mock = mock
+
+    def __call__(self, *args, **kw):
+        return self.__mock.expect(*args, **kw)
+
+
+class MethodSelector(object):
+    def __init__(self, test, obj):
+        self.__test = test
+        self.__obj = obj
+
+    def __getattr__(self, name):
+        return MethodInvocation(self.__test.stub(self.__obj, name))
+
+
 class MockeryMixin(object):
     '''
     A mixin that you can inherit from in your TestCase to add support
     for mocking methods and objects
     '''
     _mocks_storage = None
+
+    def when(self, obj):
+        return MethodSelector(self, obj)
 
     def stub(self, obj, method_name, mock_method=None):
         '''
@@ -134,6 +154,12 @@ class LaxMock(object):
         self.expected_kwargs = kwargs
         return self
 
+    def call(self, mock_method):
+        '''
+        Set method to be called when mock is called.
+        '''
+        self.return_method = mock_method
+        return self
 
     def ret(self, obj=None):
         '''

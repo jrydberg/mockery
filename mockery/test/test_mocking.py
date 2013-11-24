@@ -5,9 +5,9 @@ from unittest import TestCase
 import urllib2
 import urlparse
 
-from ..mocking import MockingBirdMixin, LaxObject, IgnoreArg
+from ..mocking import MockeryMixin, LaxObject, IgnoreArg
 
-class MockingCase(TestCase, MockingBirdMixin):
+class MockingCase(TestCase, MockeryMixin):
     def test_basic_stubs(self):
         # Most basic usage, stub out the method, each call with return a generic mock object,
         # each call is validated against the original method signature
@@ -96,6 +96,20 @@ class MockingCase(TestCase, MockingBirdMixin):
 
         o = self.new_mock_object()
         self.assertTrue(isinstance(o, LaxObject))        
+
+    def test_when(self):
+        # test that the when-selector is working
+        self.when(urllib2).urlopen('notaurl')
+        result = urllib2.urlopen('notaurl')
+        self.assertTrue(isinstance(result, LaxObject))
+
+    def test_call(self):
+        output = 'IAmExpectedOutput'
+        def mock_method(url):
+            return output
+        self.when(urllib2).urlopen('adfsa').call(mock_method)
+        self.assertEqual(output, urllib2.urlopen('adfsa'))
+
 
 class ExampleClass(object):    
     @classmethod
